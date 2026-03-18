@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {background:#0b0f1a;color:white;font-family:sans-serif;text-align:center;}
+input,button {margin:10px;padding:10px;border-radius:10px;border:none;}
+button {background:#00c3ff;color:black;}
+</style>
+</head>
+
+<body>
+
+<h2>CONECTA</h2>
+
+<div id="login">
+  <input id="tel" placeholder="Teléfono"><br>
+  <input id="pass" placeholder="Contraseña"><br>
+  <button onclick="login()">Entrar</button>
+  <button onclick="registro()">Registrarse</button>
+</div>
+
+<div id="usuario" style="display:none;">
+  <h3>Usuario</h3>
+  <input id="origen" placeholder="Origen"><br>
+  <input id="destino" placeholder="Destino"><br>
+  <input id="km" placeholder="KM"><br>
+  <input id="min" placeholder="Minutos"><br>
+  <button onclick="crearViaje()">Pedir viaje</button>
+</div>
+
+<div id="conductor" style="display:none;">
+  <h3>Conductor</h3>
+  <button onclick="verViajes()">Ver viajes</button>
+  <button onclick="entrarCola()">Entrar fila aeropuerto</button>
+  <div id="viajes"></div>
+</div>
+
+<script>
+const url = "PEGA_AQUI_TU_URL";
+
+let user = "";
+
+function post(data){
+  return fetch(url,{
+    method:"POST",
+    body:JSON.stringify(data)
+  }).then(r=>r.json());
+}
+
+function login(){
+  const telefono = document.getElementById("tel").value;
+  const password = document.getElementById("pass").value;
+
+  post({action:"login",telefono,password}).then(r=>{
+    if(r.status==="ok"){
+      user = telefono;
+      document.getElementById("login").style.display="none";
+
+      if(r.rol==="usuario"){
+        document.getElementById("usuario").style.display="block";
+      } else {
+        document.getElementById("conductor").style.display="block";
+      }
+    } else {
+      alert("Error login");
+    }
+  });
+}
+
+function registro(){
+  const telefono = document.getElementById("tel").value;
+  const password = document.getElementById("pass").value;
+
+  post({action:"registro",telefono,password,rol:"usuario"})
+  .then(()=>alert("Registrado"));
+}
+
+function crearViaje(){
+  post({
+    action:"crearViaje",
+    telefono:user,
+    origen:origen.value,
+    destino:destino.value,
+    km:Number(km.value),
+    minutos:Number(min.value)
+  }).then(r=>alert("Precio: "+r.precio));
+}
+
+function verViajes(){
+  post({action:"verViajes"}).then(r=>{
+    let html="";
+    r.viajes.forEach(v=>{
+      html += `<div>
+      ${v[2]} → ${v[3]} | $${v[6]}
+      <button onclick="aceptar(${v[0]})">Aceptar</button>
+      </div>`;
+    });
+    document.getElementById("viajes").innerHTML = html;
+  });
+}
+
+function aceptar(id){
+  post({action:"aceptarViaje",id,telefono:user})
+  .then(()=>alert("Viaje aceptado"));
+}
+
+function entrarCola(){
+  post({action:"entrarCola",telefono:user})
+  .then(()=>alert("Estás en la fila"));
+}
+</script>
+
+</body>
+</html>
